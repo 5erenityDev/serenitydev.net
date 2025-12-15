@@ -1,8 +1,14 @@
 import NextAuth from "next-auth"
 import TwitchProvider from "next-auth/providers/twitch"
 
+if (process.env.VERCEL_GIT_COMMIT_REF === 'beta') {
+  process.env.NEXTAUTH_URL = 'https://beta.serenitydev.net';
+} else if (process.env.VERCEL_ENV === 'production') {
+  process.env.NEXTAUTH_URL = 'https://serenitydev.net';
+}
+
 const handler = NextAuth({
-  providers: [
+   providers: [
     TwitchProvider({
       clientId: process.env.TWITCH_CLIENT_ID as string,
       clientSecret: process.env.TWITCH_CLIENT_SECRET as string,
