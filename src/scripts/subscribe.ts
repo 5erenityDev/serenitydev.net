@@ -6,7 +6,8 @@ async function subscribe() {
   const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
   const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
   const WEBHOOK_SECRET = process.env.TWITCH_WEBHOOK_SECRET;
-  const CALLBACK_URL = "https://serenitydev.net/api/webhooks/twitch"; // MUST BE YOUR LIVE URL
+  //const CALLBACK_URL = "https://serenitydev.net/api/webhooks/twitch"; // MUST BE YOUR LIVE URL
+  const CALLBACK_URL = "https://beta.serenitydev.net/api/webhooks/twitch";
 
   // 1. Get an App Access Token
   const tokenRes = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=client_credentials`, { method: 'POST' });
