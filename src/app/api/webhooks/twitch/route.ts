@@ -41,6 +41,10 @@ export async function POST(req: Request) {
     const eventType = payload.subscription.type;
     const eventData = payload.event;
 
+    // --- DEBUG LOG: This will tell us exactly what Twitch sent ---
+    console.log(`🔔 Event Received: ${eventType}`); 
+    // -----------------------------------------------------------
+
     try {
       // =========================================================
       // CASE A: CHANNEL POINT REDEMPTION
@@ -58,9 +62,8 @@ export async function POST(req: Request) {
           create: { id: user_id, name: user_name },
         });
 
-        // A2. Check Duplicates (One Per Lifetime)
-        const uniqueItems = ["Test Plush"]; // Add more unique items here
-        
+        // A2. Check Duplicates
+        const uniqueItems = ["Test Plush"]; 
         if (uniqueItems.includes(rewardTitle)) {
           const existingToy = await prisma.toy.findFirst({
             where: { userId: user_id, name: rewardTitle },
@@ -89,15 +92,12 @@ export async function POST(req: Request) {
         const { user_id, user_name, tier } = eventData;
         console.log(`⭐ New Sub: ${user_name} (Tier ${tier})`);
 
-        // B1. Upsert User
         await prisma.user.upsert({
           where: { id: user_id },
           update: { name: user_name },
           create: { id: user_id, name: user_name },
         });
 
-        // B2. Give "Subscriber Sword"
-        // (Optional: You can add duplicate logic here too if you only want 1 sword ever)
         await prisma.toy.create({
           data: {
             name: "Subscriber Sword", 
@@ -112,9 +112,8 @@ export async function POST(req: Request) {
       // =========================================================
       else if (eventType === 'channel.cheer') {
         const { user_id, user_name, bits } = eventData;
-        console.log(`💎 Bits: ${user_name} dropped ${bits}`);
+        console.log(`💎 Bits: ${user_name} gave ${bits}`);
 
-        // C1. Upsert User (Anonymous cheerers might not have a user_id, check for null!)
         if (user_id) {
             await prisma.user.upsert({
                 where: { id: user_id },
@@ -122,11 +121,7 @@ export async function POST(req: Request) {
                 create: { id: user_id, name: user_name },
             });
 
-            // C2. Reward Logic (Example: 1 Gemstone per 100 bits)
             if (bits >= 100) {
-                const gemCount = Math.floor(bits / 100);
-                // Loop to add multiple gems, or just add one big "Bag of Gems"
-                // For now, let's just give them a "Bits Gemstone" item
                 await prisma.toy.create({
                     data: {
                         name: "Bits Gemstone",
@@ -138,6 +133,7 @@ export async function POST(req: Request) {
         }
       }
 
+      // If we hit any of the cases above, we return THIS message
       return new NextResponse('Event Processed', { status: 200 });
 
     } catch (error) {
@@ -146,5 +142,6 @@ export async function POST(req: Request) {
     }
   }
 
+  // Fallback if no event matched
   return new NextResponse('Success', { status: 200 });
 }
