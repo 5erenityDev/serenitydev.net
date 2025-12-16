@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth"; // Import your options
 import { prisma } from "@/lib/prisma"; // Import the DB connection
+import LoginButton from "../components/LoginButton";
 
 export default async function ToysPage() {
   // 1. Get the session on the server
@@ -30,6 +31,9 @@ export default async function ToysPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center pt-20 text-white font-mono">
+      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
+        <LoginButton />
+      </div>
       <h1 className="text-4xl font-bold mb-8 text-purple-400">
         {dbUser.name}&apos;s Inventory
       </h1>
