@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { NextAuthProvider } from "./(website)/components/Providers";
+import { NextAuthProvider } from "../components/Providers";
 import "./globals.css";
 
 // --- KEEP YOUR METADATA HERE ---

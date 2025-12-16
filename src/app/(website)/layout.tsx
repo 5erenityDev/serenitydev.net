@@ -7,7 +7,7 @@ export default function WebsiteLayout({
 }>) {
   return (
     // This div applies your global background image
-    <div className="min-h-screen bg-[url(/images/site/background.png)] bg-[auto_2vw]">
+    <div className="min-h-screen bg-night-1 bg-[url(/images/site/background.png)] bg-[auto_2vw]">
       {/* This div handles the main container margins */}
       <div className="flex-grow bg-night-2 mx-[0] lg:mx-[10vw]">
         
