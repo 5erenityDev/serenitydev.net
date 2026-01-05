@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 // We removed 'redirect' because we want to show a page instead of kicking them out
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import LoginButton from "../components/LoginButton";
+import LoginButton from "../../components/LoginButton";
 
 export default async function ToyboxPage() {
   // 1. Get the session
