@@ -1,185 +1,230 @@
 "use client";
 import { useMemo } from 'react';
 
-// --- ASSET DEFINITIONS (Simple SVG Shapes) ---
+// --- ASSET DEFINITIONS ---
 
-const HAIR_COLORS = [
-  '#2a2a2a', // Black
-  '#5e4b3c', // Brown
-  '#a88f7a', // Light Brown
-  '#c9c9c9', // Grey/White
-  '#e5c76b', // Blonde
-  '#8b2e2e', // Redhead
-  '#3a5278', // Dark Blue
-];
+// Helper to generate a random number within a range from a seed
+const seededRandom = (seed: number, min: number, max: number) => {
+    const x = Math.sin(seed) * 10000;
+    return Math.floor((x - Math.floor(x)) * (max - min + 1)) + min;
+};
+
+// Helper to generate Lobotomy-style hair color (0-118 range)
+const generateHairColor = (hash: number) => {
+    const r = seededRandom(hash, 0, 118);
+    const g = seededRandom(hash + 1, 0, 118);
+    const b = seededRandom(hash + 2, 0, 118);
+    return `rgb(${r}, ${g}, ${b})`;
+};
 
 const EYE_COLORS = ['#333', '#3b82f6', '#22c55e', '#a855f7', '#ef4444'];
 
-// Simple paths/shapes for variety
-const HAIR_STYLES = [
-  // 0: Short & Neat
-  { back: <circle cx="25" cy="25" r="18" />, front: <path d="M15,15 Q25,25 35,15" fill="none" strokeWidth="4" strokeLinecap="round" /> },
-  // 1: Spiky/Messy
-  { back: <polygon points="10,20 25,5 40,20 35,40 15,40" />, front: <path d="M18,12 L25,18 L32,12" fill="none" strokeWidth="3" /> },
-  // 2: Bob/Longer
-  { back: <rect x="10" y="15" width="30" height="30" rx="5" />, front: <rect x="15" y="12" width="20" height="10" rx="2" /> },
-  // 3: Bald/Buzz (Empty shapes)
-  { back: null, front: null },
+// HAIR BACKS
+const HAIR_BACKS = [
+  <circle key="b0" cx="25" cy="25" r="17" />, 
+  <path key="b1" d="M5,25 Q15,5 25,10 Q35,5 45,25 L40,40 Q25,35 10,40 Z" />, 
+  <path key="b2" d="M10,15 Q25,5 40,15 L45,40 Q25,45 5,40 Z" />, 
+  null, 
+  <path key="b4" d="M10,18 Q25,8 40,18 L38,30 Q25,35 12,30 Z" />, 
+  <path key="b5" d="M10,15 Q25,5 40,15 L42,35 Q25,40 8,35 Z" />, 
+  <path key="b6" d="M5,15 Q25,0 45,15 L42,35 Q25,40 8,35 Z" />, 
+  <path key="b7" d="M5,18 Q25,5 45,18 L45,38 Q25,45 5,38 Z" />, 
+  <circle key="b8" cx="25" cy="23" r="16" />, 
+  <polygon key="b9" points="10,20 25,5 40,20 35,35 15,35" />, 
+  <rect key="b10" x="10" y="15" width="30" height="30" rx="5" />, 
 ];
 
+// HAIR FRONTS
+const HAIR_FRONTS = [
+  <path key="f0" d="M10,15 Q25,25 40,15 L40,12 Q25,20 10,12 Z" />, 
+  <rect key="f1" x="15" y="12" width="20" height="12" rx="2" />, 
+  null, 
+  <g key="f3">
+      <path d="M10,15 Q25,22 40,15 L40,12 Q25,18 10,12 Z" />
+      <path d="M5,15 Q0,25 5,35 L10,35 Q15,25 10,15" />
+      <rect x="6" y="14" width="6" height="3" fill="#333" />
+      <path d="M45,15 Q50,25 45,35 L40,35 Q35,25 40,15" />
+      <rect x="38" y="14" width="6" height="3" fill="#333" />
+  </g>,
+  <g key="f4">
+      <circle cx="25" cy="5" r="6" />
+      <path d="M12,15 Q25,22 38,15 L38,12 Q25,18 12,12 Z" />
+  </g>,
+  <g key="f5">
+      <circle cx="8" cy="15" r="7" />
+      <circle cx="42" cy="15" r="7" />
+      <path d="M15,15 Q25,22 35,15 L35,12 Q25,18 15,12 Z" />
+  </g>,
+  <path key="f6" d="M15,12 L20,18 L25,12 L30,18 L35,12" fill="none" strokeWidth="3" strokeLinecap="round" />, 
+  <path key="f7" d="M10,15 L18,20 L28,14 L35,18 L40,14 L40,10 Q25,15 10,10 Z" />, 
+  <path key="f8" d="M12,12 Q25,20 38,12 L38,10 Q25,16 12,10 Z" />, 
+  <path key="f9" d="M35,10 Q20,25 15,15 L15,10 Q25,18 35,8 Z" />, 
+  <path key="f10" d="M10,15 Q25,22 40,15 L40,10 Q25,18 10,10 Z" />, 
+  <path key="f11" d="M18,12 L25,18 L32,12" fill="none" strokeWidth="3" />, 
+];
+
+// REVISED EXPRESSIONS (Raised positions)
 const EXPRESSIONS = [
-  // Neutral
-  <path d="M20,38 L30,38" stroke="#333" strokeWidth="2" strokeLinecap="round" />,
-  // Smile
-  <path d="M20,38 Q25,42 30,38" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" />,
-  // Frown
-  <path d="M20,40 Q25,36 30,40" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" />,
-  // Small O
-  <circle cx="25" cy="39" r="2" fill="none" stroke="#333" strokeWidth="2" />,
+  <path key="neu" d="M20,33 L30,33" stroke="#333" strokeWidth="2" strokeLinecap="round" />,
+  <path key="smi" d="M20,33 Q25,37 30,33" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" />,
+  <path key="fro" d="M20,35 Q25,31 30,35" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" />,
+  <circle key="oh" cx="25" cy="34" r="2" fill="none" stroke="#333" strokeWidth="2" />,
 ];
 
-// --- NEW: E.G.O SUIT DEFINITIONS (Simple SVG interpretations) ---
-// All suits are designed to sit in the 'translate(0, 40)' group
+// E.G.O Suits
 const EGO_SUITS = [
-    // 0. Standard Suit (The Default)
     <g key="std">
-        <rect x="5" y="0" width="40" height="15" rx="4" fill="#1a1a1a" /> {/* Jacket */}
-        <polygon points="25,10 15,0 35,0" fill="white" /> {/* Shirt */}
-        <polygon points="25,12 22,0 28,0" fill="#dc2626" /> {/* Tie */}
+        <rect x="5" y="0" width="40" height="15" rx="4" fill="#1a1a1a" />
+        <polygon points="25,10 15,0 35,0" fill="white" />
+        <polygon points="25,12 22,0 28,0" fill="#dc2626" />
     </g>,
-    // 1. Blue Star (Grey coat, Cyan heart glow)
     <g key="blue_star">
         <rect x="5" y="0" width="40" height="15" rx="2" fill="#6b7280" />
-        <polygon points="25,12 20,5 30,5" fill="#06b6d4" opacity="0.8" /> {/* Simple "heart" glow shape */}
+        <polygon points="25,12 20,5 30,5" fill="#06b6d4" opacity="0.8" />
     </g>,
-    // 2. Queen of Hatred (Pink tactical gear)
     <g key="qoh">
-         <rect x="5" y="0" width="40" height="15" rx="2" fill="#f472b6" /> {/* Base Pink */}
-         {/* Pouches */}
+         <rect x="5" y="0" width="40" height="15" rx="2" fill="#f472b6" />
          <rect x="8" y="8" width="8" height="6" rx="1" fill="#db2777" />
          <rect x="18" y="8" width="8" height="6" rx="1" fill="#db2777" />
          <rect x="28" y="8" width="8" height="6" rx="1" fill="#db2777" />
     </g>,
-     // 3. Nothing There (Red flesh, big eye)
     <g key="nt">
-        <rect x="5" y="0" width="40" height="15" rx="4" fill="#b91c1c" /> {/* Red Base */}
-        <circle cx="25" cy="8" r="5" fill="white" stroke="#7f1d1d" strokeWidth="1"/> {/* EyeBall */}
-        <circle cx="25" cy="8" r="2" fill="#16a34a" /> {/* Pupil */}
+        <rect x="5" y="0" width="40" height="15" rx="4" fill="#b91c1c" />
+        <circle cx="25" cy="8" r="5" fill="white" stroke="#7f1d1d" strokeWidth="1"/>
+        <circle cx="25" cy="8" r="2" fill="#16a34a" />
     </g>,
-    // 4. Silent Orchestra (White robe, black notes)
     <g key="so">
-         <path d="M5,0 L45,0 L48,15 L2,15 Z" fill="#f3f4f6" /> {/* Oversized white shape */}
-         {/* Music bars */}
+         <path d="M5,0 L45,0 L48,15 L2,15 Z" fill="#f3f4f6" />
          <rect x="10" y="5" width="30" height="2" fill="black" />
          <rect x="10" y="10" width="30" height="2" fill="black" />
     </g>,
-    // 5. Mountain of Smiling Bodies (Black fur, red maw stomach)
     <g key="mosb">
-         <rect x="5" y="0" width="40" height="15" rx="4" fill="#000000" stroke="#333" strokeWidth="1" strokeDasharray="2 1"/> {/* Hairy texture attempt */}
-         <circle cx="25" cy="10" r="6" fill="#dc2626" /> {/* Maw */}
-         <circle cx="10" cy="2" r="3" fill="#facc15" /> {/* Shoulder Eye L */}
-         <circle cx="40" cy="2" r="3" fill="#facc15" /> {/* Shoulder Eye R */}
+         <rect x="5" y="0" width="40" height="15" rx="4" fill="#000000" stroke="#333" strokeWidth="1" strokeDasharray="2 1"/>
+         <circle cx="25" cy="10" r="6" fill="#dc2626" />
+         <circle cx="10" cy="2" r="3" fill="#facc15" />
+         <circle cx="40" cy="2" r="3" fill="#facc15" />
     </g>,
-     // 6. Melting Love (Pink slime suit)
     <g key="ml">
-         <rect x="5" y="0" width="40" height="15" rx="2" fill="#ec4899" /> {/* Darker pink base */}
-         {/* Slime overlay path */}
+         <rect x="5" y="0" width="40" height="15" rx="2" fill="#ec4899" />
          <path d="M5,0 Q10,5 15,2 Q20,0 25,3 Q30,6 35,2 Q40,0 45,0 L45,8 L5,8 Z" fill="#f9a8d4" />
     </g>,
-     // 7. Crumbling Armor (White samurai, red patterns)
      <g key="ca">
-        <rect x="5" y="0" width="40" height="15" rx="0" fill="#e5e7eb" /> {/* White plates */}
-        {/* Red Sunburst/Pattern */}
+        <rect x="5" y="0" width="40" height="15" rx="0" fill="#e5e7eb" />
         <path d="M25,15 L25,0 M15,15 L35,0 M35,15 L15,0" stroke="#dc2626" strokeWidth="1.5" />
     </g>,
-    // 8. Todays Shy Look (Grey hairy, masks)
     <g key="tsl">
          <rect x="5" y="0" width="40" height="15" rx="4" fill="#374151" stroke="#1f2937" strokeWidth="1" />
-         {/* Simple masks */}
          <circle cx="15" cy="5" r="3" fill="white" />
          <circle cx="35" cy="8" r="3" fill="white" />
          <circle cx="25" cy="12" r="3" fill="white" />
     </g>,
 ];
 
-// Deterministic Generator
 const generateFeatures = (username: string) => {
   let hash = 0;
-  for (let i = 0; i < username.length; i++) {
-      // Standard string hashing
-     hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  const normalized = username.toLowerCase(); 
+  for (let i = 0; i < normalized.length; i++) {
+     hash = normalized.charCodeAt(i) + ((hash << 5) - hash);
   }
   
-  const skinTone = '#ffffff'; // Standard pale L-Corp skin
-  
-  // Use different bit shifts so traits don't align predictably
-  const hColor = HAIR_COLORS[Math.abs(hash % HAIR_COLORS.length)];
-  const hStyle = HAIR_STYLES[Math.abs((hash >> 2) % HAIR_STYLES.length)];
+  const skinTone = '#FFFFFF';
+  const hColor = generateHairColor(hash);
+  const backIndex = Math.abs(hash % HAIR_BACKS.length);
+  const frontIndex = Math.abs((hash >> 3) % HAIR_FRONTS.length);
   const eColor = EYE_COLORS[Math.abs((hash >> 4) % EYE_COLORS.length)];
   const expr = EXPRESSIONS[Math.abs((hash >> 6) % EXPRESSIONS.length)];
   const eyeShape = Math.abs(hash % 2); 
-  
-  // NEW: Select Suit Index. 
-  // We weigh it so index 0 (Standard Suit) is much more common, making EGO rare.
-  const rawSuitIndex = Math.abs((hash >> 8) % 20); // Random number 0-19
-  // If it's > 8, force it to 0 (Standard suit). Otherwise use the EGO index 1-8.
-  // This makes Standard suit ~60% chance, EGO suits ~5% chance each.
+  const rawSuitIndex = Math.abs((hash >> 8) % 20); 
   const suitIndex = rawSuitIndex > 8 ? 0 : rawSuitIndex; 
 
-  return { skinTone, hColor, hStyle, eColor, expr, eyeShape, suitIndex };
+  return { skinTone, hColor, backIndex, frontIndex, eColor, expr, eyeShape, suitIndex };
 };
 
+export default function AgentPortrait({ username, deptColor, deptName }: { username: string, deptColor: string, deptName?: string }) {
+  const { skinTone, hColor, backIndex, frontIndex, eColor, expr, eyeShape, suitIndex } = useMemo(() => generateFeatures(username), [username]);
 
-export default function AgentPortrait({ username, deptColor }: { username: string, deptColor: string }) {
-  // Generate all features, including the suit index
-  const { skinTone, hColor, hStyle, eColor, expr, eyeShape, suitIndex } = useMemo(() => generateFeatures(username), [username]);
+  const isRabbit = deptName === "RABBIT";
+  const RABBIT_ORANGE = "#FD3C00";
 
-  // Grab the actual SVG element for the selected suit
-  const suit = EGO_SUITS[suitIndex] || EGO_SUITS[0];
+  const hairBack = HAIR_BACKS[backIndex];
+  const hairFront = HAIR_FRONTS[frontIndex];
 
   return (
-    // The SVG canvas: 50x50 coordinate space
     <svg viewBox="0 0 50 50" className="w-full h-full drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
       
-      {/* 1. HAIR BACK (Behind head) */}
-      {hStyle.back && <g fill={hColor}>{hStyle.back}</g>}
+      {/* 1. HAIR BACK */}
+      {!isRabbit && hairBack && <g fill={hColor}>{hairBack}</g>}
 
-      {/* 2. BODY / SUIT AREA (Moved down 40 units) */}
+      {/* 2. BODY */}
       <g transform="translate(0, 40)">
-         {/* RENDER THE SELECTED E.G.O. SUIT HERE */}
-         {suit}
+         {isRabbit ? (
+             <g>
+                <rect x="5" y="0" width="40" height="15" rx="3" fill="#111" stroke="#222" strokeWidth="1" />
+                <rect x="15" y="-2" width="20" height="4" fill="#333" /> 
+             </g>
+         ) : (
+             EGO_SUITS[suitIndex] || EGO_SUITS[0]
+         )}
       </g>
 
-      {/* 3. HEAD BASE */}
-      <circle cx="25" cy="28" r="11" fill={skinTone} stroke="#1a1a1a" strokeWidth="0.5"/>
+      {/* 3. HEAD */}
+      {isRabbit ? (
+          <g>
+              <ellipse cx="18" cy="15" rx="4" ry="12" fill="#111" stroke={RABBIT_ORANGE} strokeWidth="1" />
+              <ellipse cx="32" cy="15" rx="4" ry="12" fill="#111" stroke={RABBIT_ORANGE} strokeWidth="1" />
+              <ellipse cx="18" cy="15" rx="2" ry="8" fill={RABBIT_ORANGE} opacity="0.5" />
+              <ellipse cx="32" cy="15" rx="2" ry="8" fill={RABBIT_ORANGE} opacity="0.5" />
 
-      {/* 4. FACE */}
-      <g>
-        {/* Eyes */}
-        {eyeShape === 0 ? (
-            <>
-                <circle cx="20" cy="26" r="2" fill={eColor}/>
-                <circle cx="30" cy="26" r="2" fill={eColor}/>
-            </>
-        ) : (
-             <>
-                <rect x="18" y="25" width="4" height="2" fill={eColor}/>
-                <rect x="28" y="25" width="4" height="2" fill={eColor}/>
-            </>
-        )}
-        
-        {/* Mouth / Expression */}
-        {expr}
-      </g>
+              <circle cx="25" cy="28" r="12" fill="#1a1a1a" stroke="#000" strokeWidth="1"/>
+              
+              <circle cx="14" cy="34" r="5" fill={RABBIT_ORANGE} stroke="#444" strokeWidth="1" />
+              <circle cx="14" cy="34" r="2" fill="#111" />
+              <circle cx="36" cy="34" r="5" fill={RABBIT_ORANGE} stroke="#444" strokeWidth="1" />
+              <circle cx="36" cy="34" r="2" fill="#111" />
 
-      {/* 5. HAIR FRONT (Bangs/Top) */}
-      {hStyle.front && (
-          <g fill={hColor} stroke={hColor} strokeWidth={hColor === '#2a2a2a' ? 0 : 0.5}>
-            {hStyle.front}
+              <circle cx="19" cy="26" r="4" fill="#4ade80" filter="url(#glow)"/>
+              <circle cx="31" cy="26" r="4" fill="#4ade80" filter="url(#glow)"/>
+              
+              <rect x="24" y="32" width="2" height="6" fill="#444" />
+
+              <defs>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+              </defs>
+          </g>
+      ) : (
+          <>
+            <circle cx="25" cy="28" r="12" fill={skinTone} stroke="#1a1a1a" strokeWidth="0.5"/>
+            <g>
+                {eyeShape === 0 ? (
+                    <>
+                        <circle cx="20" cy="26" r="2" fill={eColor}/>
+                        <circle cx="30" cy="26" r="2" fill={eColor}/>
+                    </>
+                ) : (
+                    <>
+                        <rect x="18" y="25" width="4" height="2" fill={eColor}/>
+                        <rect x="28" y="25" width="4" height="2" fill={eColor}/>
+                    </>
+                )}
+                {expr}
+            </g>
+          </>
+      )}
+
+      {/* 5. HAIR FRONT */}
+      {!isRabbit && hairFront && (
+          <g fill={hColor}>
+            {hairFront}
           </g>
       )}
       
-      
+      <rect x="0.5" y="0.5" width="49" height="49" rx="0" fill="none" stroke={deptColor} strokeWidth="1" opacity="0.3" />
     </svg>
   );
 }

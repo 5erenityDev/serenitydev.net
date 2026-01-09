@@ -1,5 +1,5 @@
 "use client";
-import SerenityAvatar from "@/components/y2roll/serenity-avatar";
+import SerenityAvatar from "@/components/y2roll/serenity-avatar"; // Ensure this points to your MAIN avatar file with the audio logic
 import Y2RollGoalBar from "@/components/y2roll/y2roll-goal-bar";
 import Y2RollChatBox from "@/components/y2roll/y2roll-chat-box";
 import Y2RollSpeechBubble from "@/components/y2roll/y2roll-speech-bubble";
@@ -18,37 +18,41 @@ export default function Y2RollOverlay() {
          />
       </div>
 
-      {/* 2. GOALS (Left Side) */}
+      {/* 2. AVATAR LAYER (Middle) */}
+      {/* The "Click to Start" overlay lives inside this component. 
+          We use pointer-events-none here to let clicks pass through to the game if needed,
+          BUT the 'Click to Start' button inside SerenityAvatar forces itself to capture clicks 
+          when the mic is off.
+      */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
+         <SerenityAvatar />
+      </div>
+
+      {/* 3. GOALS (Left Side) */}
       <div className="absolute 
           top-[300px] 
           left-[40px] 
-          w-[370px] 
+          w-[280px] 
           flex flex-col gap-6 z-20"
       >
-         <Y2RollGoalBar label="Followers" target={30} dataKey="followers" />
-         <Y2RollGoalBar label="Subscribers" target={5} dataKey="subs" />
+         <Y2RollGoalBar label="ROLLERS" target={100} dataKey="followers" />
+         <Y2RollGoalBar label="GEMS" target={50} dataKey="subs" />
       </div>
 
-      {/* 3. CHAT (Right Side) */}
+      {/* 4. CHAT (Right Side) */}
       <div className="absolute 
           top-[38px] 
           right-[38px] 
-          w-[380px] 
+          w-[300px] 
           h-[600px] 
           z-20"
       >
          <Y2RollChatBox channel="serenitydev" className="w-full h-full" />
       </div>
 
-      {/* 4. SPEECH BUBBLE (Bottom Center) */}
-      {/* Positioned to float at the bottom, centered horizontally */}
-      <div className="absolute bottom-[40px] left-1/2 -translate-x-1/2 w-full max-w-4xl z-30 pointer-events-none">
+      {/* 5. SPEECH BUBBLE (Bottom Center - Top Layer) */}
+      <div className="absolute bottom-[40px] left-1/2 -translate-x-1/2 w-full max-w-4xl z-30 pointer-events-none flex justify-center">
          <Y2RollSpeechBubble />
-      </div>
-
-      {/* 5. AVATAR LAYER */}
-      <div className="absolute inset-0 z-10 pointer-events-none">
-         <SerenityAvatar />
       </div>
 
     </main>

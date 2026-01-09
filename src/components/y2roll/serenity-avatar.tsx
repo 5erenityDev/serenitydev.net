@@ -50,19 +50,17 @@ export default function SerenityAvatar() {
 
     } catch (e) {
       console.error("Mic access denied", e);
-      alert("Microphone access denied! Check browser settings.");
+      // Optional: alert("Microphone access denied! Check browser settings.");
     }
   };
 
   // 2. AUTO-START ATTEMPT (For OBS with flags)
   useEffect(() => {
-    // Try to start immediately on load. 
-    // This often works in OBS if the flag is set, but fails in normal Chrome.
     const attemptAutoStart = async () => {
         try {
             await initAudio();
         } catch (e) {
-            // If it fails, we just wait for the user click
+            // Silently fail if interaction is needed
         }
     };
     attemptAutoStart();
@@ -108,7 +106,11 @@ export default function SerenityAvatar() {
   return (
     <div className="w-full h-full relative group">
        
-       {/* CLICK OVERLAY - Now z-50 and covers everything to catch clicks */}
+       {/* CLICK OVERLAY - CRITICAL FIX 
+          Using 'fixed inset-0 z-[9999]' forces this red screen to cover the ENTIRE browser window
+          regardless of where this component is buried in the HTML.
+          This ensures you can always click it to start the audio engine.
+       */}
        {!audioStarted && (
          <div 
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 cursor-pointer"
@@ -120,7 +122,7 @@ export default function SerenityAvatar() {
          </div>
        )}
 
-       {/* SETTINGS PANEL */}
+       {/* SETTINGS PANEL (Hidden unless hovered) */}
        {audioStarted && (
          <div className="absolute top-4 left-4 z-[9999] bg-black/90 border border-white p-4 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto w-64 space-y-4">
             
