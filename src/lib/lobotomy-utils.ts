@@ -1,4 +1,3 @@
-// Shared constants 
 export const DEPARTMENTS = [
   { name: "CONTROL", color: "#D8D556" },
   { name: "INFO", color: "#81339C" },
@@ -16,8 +15,10 @@ export const DEPARTMENTS = [
 export const getRandomInt = (max: number) => Math.floor(Math.random() * max);
 export const getRandomItem = <T>(arr: T[]): T => arr[getRandomInt(arr.length)];
 
-export const generateNewAgent = (username: string) => {
-  const dept = getRandomItem(DEPARTMENTS);
+// MODIFIED: Accepts an optional 'keepDept' argument
+export const generateNewAgent = (username: string, keepDept?: { name: string, color: string }) => {
+  // If keepDept exists, use it. Otherwise, pick random.
+  const dept = keepDept || getRandomItem(DEPARTMENTS);
   
   const r = getRandomInt(119);
   const g = getRandomInt(119);
@@ -26,12 +27,14 @@ export const generateNewAgent = (username: string) => {
   return {
     username: username.toLowerCase(),
     department: dept.name,
-    userColor: dept.color,
+    userColor: dept.color, // Matches Schema
+    
     hairIndex: getRandomInt(12), 
     backHairIndex: getRandomInt(10), 
     suitIndex: getRandomInt(9),  
     eyeIndex: getRandomInt(5),   
     mouthIndex: getRandomInt(4), 
+    
     hairColor: `rgb(${r},${g},${b})`
   };
 };

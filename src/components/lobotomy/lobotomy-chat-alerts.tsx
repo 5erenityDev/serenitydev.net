@@ -95,11 +95,12 @@ const PANIC_PHRASES = [
   "Does he know? He doesn't know. Chat, does he know?",
   "I was born with glass bones and paper skin. Every morning I break my legs, and every afternoon I break my arms.",
   "Connection terminated. I'm sorry to interrupt you, Elizabeth, if you still even remember that name. But I'm afraid you've been misinformed. You are not here to receive a gift, nor have you been called here by the individual you assume, although, you have indeed been called.",
+  "Stop blabbering and get these sexy women outta my sight!!",
   "Peep the horror.",
+  "Open the curtains! Lights on! Don't miss a moment of this experiment!",
   "Chat is this real?",
   "You should treat yourself... NOW! ⚡",
   "[CENSORED]",
-  "Open the curtains! Lights on! Don't miss a moment of this experiment!",
   "Mods, crush his skull please. Thank you.",
   "AAAAAAAAAAAAAAUUUUUUUUUUUGGGGGHHHHHHHH.",
   "We Can Change Anything",
@@ -122,16 +123,24 @@ export default function LobotomyChatAlerts({ channel, className = "" }: { channe
         const rawLatest = messages[messages.length - 1];
         const username = rawLatest.user;
         const msgText = rawLatest.text.trim().toLowerCase();
+        
+        // DETECT COMMANDS
         const isReroll = msgText === '!reroll';
+        const isJoin = msgText.startsWith('!join ');
+        const isToggle = msgText === '!insanity' || msgText === '!death'; // <--- NEW
 
-        if (isReroll) agentCache.current.delete(username); 
+        // 1. INVALIDATE CACHE
+        if (isReroll || isJoin || isToggle) {
+            agentCache.current.delete(username); 
+        }
 
-        // Optimistic Load
         let identity = agentCache.current.get(username);
 
-        // Fetch Fresh Data (Always)
         try {
-            if (isReroll) await new Promise(r => setTimeout(r, 1000));
+            // 2. WAIT FOR DB
+            if (isReroll || isJoin || isToggle) {
+                await new Promise(r => setTimeout(r, 1000));
+            }
 
             const res = await fetch(`/api/lobotomy/agent?username=${username}`);
             const data = await res.json();
@@ -160,9 +169,8 @@ export default function LobotomyChatAlerts({ channel, className = "" }: { channe
         }
         // -------------------
 
-        const enrichedLatest = { 
+const enrichedLatest = { 
             ...rawLatest, 
-            text: finalText, // Use the modified text
             identity: identity
         };
 

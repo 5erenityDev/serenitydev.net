@@ -5,65 +5,41 @@ import { generateNewAgent } from '@/lib/lobotomy-utils';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-  console.log("🔵 [API] Reroll Endpoint Hit!"); // DEBUG: Must appear in terminal
-
   try {
-    const body = await req.json();
-    console.log("🔵 [API] Request Body:", body); // DEBUG
-
-    const { username } = body;
-    
-    if (!username) {
-        console.log("🔴 [API] No username provided");
-        return NextResponse.json({ success: false, message: "No username provided" });
-    }
+    const { username } = await req.json();
+    if (!username) return NextResponse.json({ success: false });
 
     const cleanName = username.toLowerCase();
-
-    // 1. Find Agent
     const agent = await prisma.lobotomyAgent.findUnique({ where: { username: cleanName }});
 
     if (!agent) {
-       console.log(`🔴 [API] Agent ${cleanName} not found`);
-       return NextResponse.json({ success: false, message: "Agent not found. Speak in chat first!" });
+       return NextResponse.json({ success: false, message: "Agent not found." });
     }
 
-    // 2. Cost Check
+    // Cost Check (0 for now)
     const COST = 0; 
-    console.log(`🔵 [API] Checking Cost: Has ${agent.totalPeBoxes}, Need ${COST}`);
-
     if (agent.totalPeBoxes < COST) {
-        return NextResponse.json({ 
-            success: false, 
-            message: `Need ${COST} PE-Boxes (You have ${agent.totalPeBoxes})` 
-        });
+        return NextResponse.json({ success: false, message: "Not enough PE-Boxes" });
     }
 
-    // 3. Generate New Look
-    const fullStats = generateNewAgent(cleanName);
+    // --- CRITICAL CHANGE ---
+    // We pass the CURRENT department to the generator so it doesn't change
+    const currentDept = { name: agent.department, color: agent.userColor };
+    const fullStats = generateNewAgent(cleanName, currentDept);
+    
     const { username: _ignored, ...appearanceStats } = fullStats;
 
-    console.log(`🟢 [API] Updating DB for ${cleanName}...`);
-
-    // 4. Update Database
     const updatedAgent = await prisma.lobotomyAgent.update({
         where: { username: cleanName },
         data: {
-            ...appearanceStats, 
+            ...appearanceStats,
             totalPeBoxes: { decrement: COST }
         }
     });
 
-    console.log("🟢 [API] DB Update Success!", updatedAgent.hairIndex);
-
-    return NextResponse.json({ 
-        success: true, 
-        message: "Genetic Restructure Complete.",
-        agent: updatedAgent 
-    });
+    return NextResponse.json({ success: true, message: "Reroll Complete.", agent: updatedAgent });
 
   } catch (error) {
-    console.error("🔥 [API] CRASH:", error);
     return NextResponse.json({ error: "Reroll failed" }, { status: 500 });
   }
 }

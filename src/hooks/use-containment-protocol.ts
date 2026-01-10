@@ -97,6 +97,48 @@ export function useContainmentProtocol() {
       }
   };
 
+  // --- NEW: TOGGLE COMMAND ---
+  const processToggle = async (username: string, command: 'insanity' | 'death') => {
+      setLastLog(`Processing ${command} request for ${username}...`);
+      try {
+          const res = await fetch('/api/lobotomy/toggle', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username, command }),
+          });
+          const data = await res.json();
+          
+          if (data.success) {
+              setLastLog(`> ${data.message}`);
+          } else {
+              setLastLog(`> Error: ${data.message}`);
+          }
+      } catch (e) {
+          console.error(e);
+      }
+  };
+
+// --- NEW: JOIN COMMAND ---
+  const processJoin = async (username: string, deptName: string) => {
+      setLastLog(`Processing transfer request: ${username} -> ${deptName}...`);
+      try {
+          const res = await fetch('/api/lobotomy/join', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username, departmentName: deptName }),
+          });
+          const data = await res.json();
+          
+          if (data.success) {
+              setLastLog(`> Transfer approved: ${data.agent.department} Team.`);
+          } else {
+              setLastLog(`> Transfer Denied: ${data.message}`);
+          }
+      } catch (e) {
+          console.error(e);
+      }
+  };
+
   return { 
     abno: CURRENT_ABNO_VISUALS, 
     peBoxes, 
@@ -104,6 +146,8 @@ export function useContainmentProtocol() {
     workingState, 
     activeAgent, 
     processCommand,
-    processReroll 
+    processReroll,
+    processJoin,
+    processToggle
   };
 }
