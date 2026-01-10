@@ -1,77 +1,105 @@
 "use client";
-import MonitorFrame from "@/components/lobotomy/monitor-frame";
-import LobotomyChatAlerts from "@/components/lobotomy/lobotomy-chat-alerts";
-import LobotomyGoalBar from "@/components/lobotomy/lobotomy-goal-bar";
-import ContainmentUnit from "@/components/lobotomy/containment-unit";
-import AlertLayer from "@/components/lobotomy/alert-layer";
+import { motion } from "framer-motion";
+import { generateNewAgent, DEPARTMENTS } from "@/lib/lobotomy-utils";
+import AgentPortrait from "@/components/lobotomy/agent-portrait";
 
-export default function LobotomyOverlay() {
+// MOCK DATA: Replace this with your actual list of subs/followers if you have a database fetch here.
+// For now, this generates a visual example so the build passes.
+const MOCK_COMMUNITY = [
+  { name: "Serenity_Dev", dept: "CONTROL" },
+  { name: "Nightbot", dept: "INFO" },
+  { name: "Chatter_A", dept: "TRAINING" },
+  { name: "Chatter_B", dept: "SECURITY" },
+  { name: "Chatter_C", dept: "CENTRAL" },
+];
+
+export default function LobotomyTeamPage() {
   return (
-    <main className="w-[1920px] h-[1080px] bg-transparent relative overflow-hidden font-sans text-white">
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-[#ef4444] selection:text-white pb-20">
       
-      {/* GRID LAYOUT 
-        Cols: [Main Area (Flexible)] [Sidebar (380px)]
-        Rows: [Header (60px)] [Game (Flexible)] [Containment Dashboard (240px)]
-      */}
-      <div className="absolute inset-0 grid grid-cols-[1fr_380px] grid-rows-[60px_1fr_240px]">
+      {/* HEADER */}
+      <header className="bg-[#111] border-b-4 border-[#ef4444] py-12 text-center relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[url('/assets/noise.png')] pointer-events-none" />
+        <h1 className="text-6xl font-black uppercase tracking-tighter mb-2 relative z-10">
+          Organizational <span className="text-[#ef4444]">Chart</span>
+        </h1>
+        <p className="font-mono text-gray-500 tracking-[0.5em] uppercase text-sm relative z-10">
+          Current Staff Assignment
+        </p>
+      </header>
 
-        {/* --- 1. HEADER --- */}
-        <header className="col-span-2 row-start-1 bg-[#1a1a1a] border-b-4 border-[#ef4444] flex items-center justify-between px-6 z-20">
-             <div className="flex items-baseline gap-4">
-                <h1 className="text-4xl font-black text-[#ef4444] uppercase italic tracking-tighter">
-                    DAY <span className="text-white">49</span>
-                </h1>
-                <span className="text-[#f59e0b] font-mono font-bold tracking-widest text-sm">
-                    // ORDEAL: VIOLET MIDNIGHT
-                </span>
-             </div>
+      {/* DEPARTMENT GRID */}
+      <div className="max-w-7xl mx-auto px-4 mt-12 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        
+        {DEPARTMENTS.map((dept) => {
+          // Find users assigned to this department (or just show placeholders)
+          const members = MOCK_COMMUNITY.filter(u => u.dept === dept.name);
+          
+          // If no members, show at least one "Unknown" for visual demo
+          if (members.length === 0) {
+             members.push({ name: `Agent_${dept.name.substring(0,3)}`, dept: dept.name });
+          }
 
-             <div className="flex gap-6 h-3/4 items-center">
-                 <LobotomyGoalBar label="QUOTA" target={100} dataKey="followers" className="w-[200px]" />
-                 <LobotomyGoalBar label="PE-BOX" target={50} dataKey="subs" className="w-[200px]" color="#00bcd4" />
-             </div>
-        </header>
+          return (
+            <motion.div 
+              key={dept.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="bg-[#111] border-2 border-[#333] overflow-hidden flex flex-col"
+            >
+              {/* DEPT HEADER */}
+              <div 
+                className="p-3 flex justify-between items-center border-b border-[#333]"
+                style={{ backgroundColor: `${dept.color}20` }} // 20% opacity background
+              >
+                <h2 className="font-black text-xl uppercase tracking-tight" style={{ color: dept.color }}>
+                  {dept.name} TEAM
+                </h2>
+                <div className="w-4 h-4 rounded-full shadow-[0_0_10px_currentColor]" style={{ backgroundColor: dept.color }} />
+              </div>
 
-        {/* --- 2. GAME WINDOW (Top Left) --- */}
-        <section className="col-start-1 row-start-2 relative z-10 border-r-4 border-[#333]">
-            {/* Transparent Hole for OBS - Watermark Removed */}
-            <div className="w-full h-full border-4 border-dashed border-[#ef4444]/20 box-border"></div>
-        </section>
+              {/* AGENT LIST */}
+              <div className="p-4 grid grid-cols-2 gap-4">
+                {members.map((member) => {
+                  // --- THE FIX: GENERATE IDENTITY HERE ---
+                  const identity = generateNewAgent(member.name);
 
-        {/* --- 3. SIDEBAR (Right Column) --- */}
-        <aside className="col-start-2 row-start-2 row-span-2 bg-[#111] border-l-4 border-[#ef4444] flex flex-col z-30 shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
-            
-            {/* CHAT ALERTS */}
-            <div className="flex-1 p-2 bg-[#0d0d0d] overflow-hidden relative flex flex-col">
-                <LobotomyChatAlerts channel="serenity_dev" className="h-full w-full" />
-                {/* Gradient Fade at top */}
-                <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-[#0d0d0d] to-transparent pointer-events-none" />
-            </div>
+                  return (
+                    <div key={member.name} className="flex flex-col items-center bg-[#1a1a1a] border border-[#333] p-2 rounded hover:border-white/20 transition-colors group">
+                      
+                      {/* PORTRAIT CONTAINER */}
+                      <div className="w-24 h-24 relative mb-2 overflow-hidden bg-[#111] border border-white/5 rounded-full group-hover:scale-105 transition-transform">
+                        <AgentPortrait 
+                          // Pass the generated indexes
+                          hairIndex={identity.hairIndex}
+                          backHairIndex={identity.backHairIndex}
+                          suitIndex={identity.suitIndex}
+                          eyeIndex={identity.eyeIndex}
+                          mouthIndex={identity.mouthIndex}
+                          hairColor={identity.hairColor}
+                          // Pass Department Info
+                          deptColor={dept.color}
+                          deptName={dept.name}
+                        />
+                      </div>
 
-            {/* AVATAR FEED */}
-            <div className="h-[380px] border-t-4 border-[#333] bg-[#0a0a0a] relative shrink-0">
-                 <div className="absolute top-2 right-2 text-[#00bcd4] text-[10px] font-mono tracking-widest uppercase z-20">
-                    Sephirah: Serenity
-                 </div>
-                 {/* This is where your VTuber/Avatar source goes in OBS */}
-                 <div className="w-full h-full flex items-center justify-center opacity-20 font-mono text-xs">
-                    [AVATAR SIGNAL LOST]
-                 </div>
-                 {/* Tech decorative lines */}
-                 <div className="absolute bottom-10 left-0 w-full h-[1px] bg-[#00bcd4]/30" />
-                 <div className="absolute bottom-12 left-0 w-full h-[1px] bg-[#00bcd4]/10" />
-            </div>
-        </aside>
-
-        {/* --- 4. BOTTOM DASHBOARD: CONTAINMENT UNIT --- */}
-        <footer className="col-start-1 row-start-3 bg-[#050505] relative z-20">
-            {/* The Unit takes up the full bottom-left width */}
-            <ContainmentUnit className="w-full h-full" />
-        </footer>
+                      {/* NAME TAG */}
+                      <div className="text-center">
+                        <span className="block font-bold text-sm text-gray-200">{member.name}</span>
+                        <span className="block text-[10px] font-mono text-gray-500 uppercase">
+                          Level {Math.ceil(Math.random() * 5)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          );
+        })}
 
       </div>
-      
-      <AlertLayer />
-    </main>
+    </div>
   );
 }
